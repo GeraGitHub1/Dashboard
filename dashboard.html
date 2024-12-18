@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard IoT</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        #data {
+            background: #fff;
+            padding: 20px;
+            margin: 10px auto;
+            width: 300px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+        p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Datos del IoT en Tiempo Real</h1>
+    <div id="data">
+        <p><strong>Temperatura:</strong> <span id="temperatura">-</span> °C</p>
+        <p><strong>Humedad:</strong> <span id="humedad">-</span> %</p>
+        <p><strong>Timestamp:</strong> <span id="timestamp">-</span></p>
+    </div>
+
+    <script>
+        // Configuración del Broker MQTT
+        const brokerUrl = "wss://broker.hivemq.com:8884/mqtt";
+        const topic = "iot/data"; // Tópico donde publicas tus datos
+
+        // Conexión al broker MQTT
+        const client = mqtt.connect(brokerUrl);
+
+        // Al conectar exitosamente
+        client.on("connect", () => {
+            console.log("Conectado al broker MQTT");
+            client.subscribe(topic, (err) => {
+                if (!err) {
+                    console.log(`Suscrito al tópico: ${topic}`);
+                } else {
+                    console.error("Error al suscribirse:", err);
+                }
+            });
+        });
+
+        // Al recibir un mensaje del tópico
+        client.on("message", (topic, message) => {
+            console.log("Mensaje recibido:", message.toString());
+
+            // Parsear el mensaje (asume formato JSON)
+            const data = JSON.parse(message.toString());
+
+            // Actualizar los valores en la página
+            document.getElementById("temperatura").innerText = data.temperatura.toFixed(2);
+            document.getElementById("humedad").innerText = data.humedad.toFixed(2);
+            document.getElementById("timestamp").innerText = data.timestamp;
+        });
+
+        // Manejar errores de conexión
+        client.on("error", (error) => {
+            console.error("Error de conexión MQTT:", error);
+        });
+    </script>
+</body>
+</html>
